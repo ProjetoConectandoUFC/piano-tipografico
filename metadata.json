@@ -1,0 +1,6 @@
+{
+  "name": "MIDI Note Visualizer",
+  "description": "A web application that projects musical notes played on a MIDI controller. It features customization options for fonts and colors, and special integration for Akai MPK Mini controllers to map knobs to visual parameters.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
