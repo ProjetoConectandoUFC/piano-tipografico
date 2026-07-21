@@ -4,18 +4,30 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Título da página exibido na aba do navegador -->
     <title>MIDI Note Visualizer</title>
+    
+    <!-- Importação do framework Tailwind CSS via CDN para estilização rápida -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Otimização de conexão para o Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Importação de todas as fontes personalizadas usadas no aplicativo (Roboto Mono, Oswald, Playfair Display, etc.) -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Oswald:wght@400;700&family=Playfair+Display:wght@400;700&family=Bebas+Neue&family=Lobster&family=Permanent+Marker&family=Press+Start+2P&family=Monoton&family=Pacifico&family=Black+Ops+One&display=swap" rel="stylesheet">
+    
+    <!-- Estilos globais padrão para o corpo da página -->
     <style>
       body {
-        font-family: 'Roboto Mono', monospace;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
+        font-family: 'Roboto Mono', monospace; /* Fonte padrão inicial da aplicação */
+        -webkit-font-smoothing: antialiased;    /* Suavização de fontes para navegadores baseados em WebKit (Chrome/Safari) */
+        -moz-osx-font-smoothing: grayscale;   /* Suavização de fontes otimizada para macOS */
       }
     </style>
+
+  <!-- Mapeamento de importações (Import Map) para carregar o React e ReactDOM diretamente via CDN no navegador -->
   <script type="importmap">
 {
   "imports": {
@@ -26,10 +38,15 @@
   }
 }
 </script>
+
+<!-- Folha de estilos local adicional -->
 <link rel="stylesheet" href="/index.css">
 </head>
   <body>
+    <!-- Ponto de montagem principal onde a aplicação React será renderizada -->
     <div id="root"></div>
+    
+    <!-- Ponto de entrada do script TypeScript/React da aplicação -->
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
