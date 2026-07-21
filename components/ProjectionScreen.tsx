@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { AppSettings, VisualNote, ActiveNoteInfo } from '../types';
 import { Note } from './Note';
 
+// Define a estrutura de dados (tipos) que a tela de projeção precisa receber via props
 interface ProjectionScreenProps {
     visualNotes: VisualNote[];
     activeNotes: Map<string, ActiveNoteInfo>;
@@ -12,6 +12,7 @@ interface ProjectionScreenProps {
     noteOffsets: Map<number, { x: number; y: number }>;
 }
 
+// Inicia o componente que renderiza o painel principal de exibição das notas musicais
 export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ 
     visualNotes, 
     activeNotes, 
@@ -21,16 +22,19 @@ export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({
     noteOffsets,
 }) => {
     return (
+        // Contêiner principal da tela que aplica a cor de fundo dinâmica e esconde excessos de conteúdo
         <div
             className="absolute inset-0 transition-colors duration-500 overflow-hidden"
             style={{ backgroundColor: settings.backgroundColor }}
         >
+            {/* Percorre a lista de notas visuais e renderiza cada uma na tela */}
             {visualNotes.map((note) => {
                 const noteName = note.text;
                 const activeInfo = activeNotes.get(noteName);
                 const offset = noteOffsets.get(note.id);
                 
                 return (
+                    // Componente individual de cada nota musical com suas propriedades e referências mapeadas
                     <Note 
                         key={note.id}
                         note={note}
