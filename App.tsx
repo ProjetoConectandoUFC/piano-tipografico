@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { AppSettings, MidiDevice, KnobValues, VisualNote, ActiveNoteInfo } from './types';
@@ -9,12 +8,7 @@ import { ProjectionScreen } from './components/ProjectionScreen';
 import { SettingsIcon, CloseIcon } from './components/Icons';
 
 /**
- * Generates non-overlapping points using a Poisson-disc sampling algorithm.
- * @param width The width of the area to generate points in.
- * @param height The height of the area to generate points in.
- * @param minRadius The minimum distance between any two points.
- * @param k The number of attempts to find a valid point around an active sample.
- * @returns An array of {x, y} coordinates.
+ * Gera pontos que não se sobrepõem usando o algoritmo Poisson-disc sampling.
  */
 const poissonDiscSampling = (width: number, height: number, minRadius: number, k = 30): { x: number; y: number }[] => {
     const cellSize = minRadius / Math.sqrt(2);
@@ -30,7 +24,7 @@ const poissonDiscSampling = (width: number, height: number, minRadius: number, k
 
     if (width <= 0 || height <= 0) return [];
     
-    // Add first point
+    // Adiciona o primeiro ponto aleatório
     const initialPos = { x: Math.random() * width, y: Math.random() * height };
     const initialGridCoords = toGridCoords(initialPos);
     
@@ -46,7 +40,7 @@ const poissonDiscSampling = (width: number, height: number, minRadius: number, k
 
         for (let i = 0; i < k; i++) {
             const angle = Math.random() * 2 * Math.PI;
-            const radius = Math.random() * minRadius + minRadius; // sample in annulus [r, 2r]
+            const radius = Math.random() * minRadius + minRadius;
             const candidate = {
                 x: activePoint.x + radius * Math.cos(angle),
                 y: activePoint.y + radius * Math.sin(angle),
@@ -94,29 +88,27 @@ const poissonDiscSampling = (width: number, height: number, minRadius: number, k
     return points;
 };
 
-
+// Gera as notas visuais na tela com base nas configurações
 const generateVisualNotes = (settings: AppSettings, viewportWidth: number, viewportHeight: number, fontSizeMultiplier: number): VisualNote[] => {
     if (viewportWidth === 0 || viewportHeight === 0) return [];
 
     const { noteDensity, noteRandomness, noteSystem } = settings;
 
-    // 1. Calculate minRadius from noteDensity. Higher density means a smaller radius.
-    const maxRadius = 200; // Corresponds to lowest density
-    const minRadius = 40;  // Corresponds to highest density
+    // Define o raio mínimo e máximo com base na densidade
+    const maxRadius = 200;
+    const minRadius = 40;
     const radiusRange = maxRadius - minRadius;
-    const effectiveDensity = (noteDensity - 0.05) / 0.95; // Normalize density from 0 to 1
+    const effectiveDensity = (noteDensity - 0.05) / 0.95;
     const currentMinRadius = maxRadius - (effectiveDensity * radiusRange);
 
-    // 2. Calculate generation area from noteRandomness
+    // Define a área de geração com base na aleatoriedade
     const generationWidth = viewportWidth * (noteRandomness / 100);
     const generationHeight = viewportHeight * (noteRandomness / 100);
     const offsetX = (viewportWidth - generationWidth) / 2;
     const offsetY = (viewportHeight - generationHeight) / 2;
 
-    // 3. Generate non-overlapping points
     const points = poissonDiscSampling(generationWidth, generationHeight, currentMinRadius);
 
-    // 4. Create VisualNote objects from the generated points
     const notes: VisualNote[] = [];
     const naturalNotes = NOTE_NAME_SYSTEMS[noteSystem].natural;
     let id = 0;
@@ -131,13 +123,12 @@ const generateVisualNotes = (settings: AppSettings, viewportWidth: number, viewp
                 top: `${((point.y + offsetY) / viewportHeight) * 100}%`,
             },
             rotation: Math.random() * 50 - 25,
-            fontSize: (Math.random() * 2 + 2.5) * fontSizeMultiplier, // vw units
+            fontSize: (Math.random() * 2 + 2.5) * fontSizeMultiplier,
         });
     }
 
-    return notes.sort(() => Math.random() - 0.5); // Shuffle for better note distribution
+    return notes.sort(() => Math.random() - 0.5);
 };
-
 
 const App: React.FC = () => {
     const [midiAccess, setMidiAccess] = useState<MIDIAccess | null>(null);
@@ -164,6 +155,7 @@ const App: React.FC = () => {
     const noteRefs = useRef(new Map<number, HTMLDivElement>());
     const [noteOffsets, setNoteOffsets] = useState<Map<number, { x: number; y: number }>>(new Map());
 
+    // Atualiza o tamanho da tela quando redimensionada
     useEffect(() => {
         const handleResize = () => {
             const target = projectionWindowRef.current || window;
@@ -171,14 +163,12 @@ const App: React.FC = () => {
         };
         const targetWindow = projectionWindowRef.current || window;
         targetWindow.addEventListener('resize', handleResize);
-        // Initial size set
         handleResize();
         return () => targetWindow.removeEventListener('resize', handleResize);
     }, [projectionContainer]);
 
-
+    // Regenera as notas visuais quando as configurações mudam
     useEffect(() => {
-        // Debounce regeneration to avoid lag during resizing
         const timeoutId = setTimeout(() => {
             const target = projectionWindowRef.current || window;
             setVisualNotes(generateVisualNotes(settings, target.innerWidth, target.innerHeight, fontSizeMultiplier));
@@ -187,7 +177,7 @@ const App: React.FC = () => {
         return () => clearTimeout(timeoutId);
     }, [settings.noteDensity, settings.noteRandomness, settings.noteSystem, viewportSize, settings.fontFamily, fontSizeMultiplier, projectionContainer]);
 
-
+    // Inicializa o acesso MIDI ao carregar o aplicativo
     useEffect(() => {
         const initMidi = async () => {
             try {
@@ -218,6 +208,7 @@ const App: React.FC = () => {
         initMidi();
     }, []);
 
+    // Manipula quando uma nota MIDI é acionada (Note On)
     const handleNoteOn = useCallback((noteNumber: number, velocity: number) => {
         const anglicanNoteName = NOTE_NAME_SYSTEMS.anglican.all[noteNumber % 12];
         const naturalNote = anglicanNoteName.replace('#', '');
@@ -237,6 +228,7 @@ const App: React.FC = () => {
         });
     }, [settings.noteColors, settings.noteSystem]);
 
+    // Manipula quando uma nota MIDI é desativada (Note Off)
     const handleNoteOff = useCallback((noteNumber: number) => {
         const anglicanNoteName = NOTE_NAME_SYSTEMS.anglican.all[noteNumber % 12];
         const naturalNote = anglicanNoteName.replace('#', '');
@@ -257,6 +249,7 @@ const App: React.FC = () => {
         }
     }, [settings.noteSystem]);
 
+    // Manipula mudanças em knobs ou controles MIDI
     const handleControlChange = useCallback((controllerNumber: number, value: number) => {
         setKnobValues(prev => ({ ...prev, [controllerNumber]: value }));
         
@@ -266,7 +259,6 @@ const App: React.FC = () => {
             const newScale = minScale + (value / 127) * (maxScaleAmount - minScale);
             setMaxScale(newScale);
         } else if (controllerNumber === AKAI_MPK_MINI_KNOBS['K6']) {
-            // Map 0-127 to a multiplier range, e.g., 0.5x to 2.0x
             const minMultiplier = 0.5;
             const maxMultiplier = 2.0;
             const newMultiplier = minMultiplier + (value / 127) * (maxMultiplier - minMultiplier);
@@ -274,6 +266,7 @@ const App: React.FC = () => {
         }
     }, []);
     
+    // Ouve os eventos do dispositivo MIDI selecionado
     useEffect(() => {
         if (!midiAccess || !selectedInputId || isSimulationMode) return;
 
@@ -291,6 +284,7 @@ const App: React.FC = () => {
         return cleanup;
     }, [midiAccess, selectedInputId, handleNoteOn, handleNoteOff, handleControlChange, isSimulationMode]);
     
+    // Modo simulação para testes sem teclado físico conectado
     useEffect(() => {
         if (!isSimulationMode) return;
         const simulationInterval = setInterval(() => {
@@ -302,7 +296,7 @@ const App: React.FC = () => {
         return () => clearInterval(simulationInterval);
     }, [isSimulationMode, handleNoteOn, handleNoteOff]);
 
-    // Collision and Push Effect
+    // Calcula colisões e efeito de empurrão entre as notas na tela
     useEffect(() => {
         if (activeNotes.size === 0) {
             setNoteOffsets(new Map());
@@ -312,7 +306,6 @@ const App: React.FC = () => {
         const newOffsets = new Map<number, { x: number; y: number }>();
         const activeNoteElements: { id: number; rect: DOMRect }[] = [];
 
-        // Get rects for active notes
         visualNotes.forEach(vNote => {
             if (activeNotes.has(vNote.text)) {
                 const el = noteRefs.current.get(vNote.id);
@@ -349,11 +342,11 @@ const App: React.FC = () => {
                 const overlap = combinedRadius - distance;
 
                 if (overlap > 0) {
-                    const pushFactor = overlap * 1.5; // Push away a bit more than just the overlap
+                    const pushFactor = overlap * 1.5;
                     if (distance > 0) {
                         totalPush.x += (dx / distance) * pushFactor;
                         totalPush.y += (dy / distance) * pushFactor;
-                    } else { // Exactly overlapping, push in a random direction
+                    } else {
                         const randomAngle = Math.random() * 2 * Math.PI;
                         totalPush.x += Math.cos(randomAngle) * pushFactor;
                         totalPush.y += Math.sin(randomAngle) * pushFactor;
@@ -369,7 +362,6 @@ const App: React.FC = () => {
         setNoteOffsets(newOffsets);
 
     }, [activeNotes, visualNotes]);
-
 
     const handleDeviceChange = (id: string) => {
         setSelectedInputId(id);
@@ -389,6 +381,7 @@ const App: React.FC = () => {
         setIsSimulationMode(enabled);
     };
 
+    // Abre uma nova janela para projeção em tela externa
     const handleOpenProjection = () => {
         if (projectionWindowRef.current && !projectionWindowRef.current.closed) {
             projectionWindowRef.current.focus();
@@ -400,7 +393,6 @@ const App: React.FC = () => {
             projectionWindowRef.current = newWindow;
             newWindow.document.title = 'MIDI Visualizer - Projection';
             
-            // Copy styles from main window
             Array.from(document.styleSheets).forEach(styleSheet => {
                 if (styleSheet.href) {
                     const link = newWindow.document.createElement('link');
@@ -428,7 +420,6 @@ const App: React.FC = () => {
             });
         }
     };
-
 
     return (
         <div className="relative min-h-screen w-full overflow-hidden" style={{ backgroundColor: settings.backgroundColor }}>
